@@ -13,8 +13,10 @@ import com.google.inject.Injector;
 import de.cau.dataprocessing.engine.Graph;
 import de.cau.dataprocessing.filters.IDataMangler;
 import de.cau.dataprocessing.reflect.InstanceMethod;
+import de.cau.dataprocessing.tests.data.SimpleTestSink;
+import de.cau.dataprocessing.tests.data.SimpleTestSource;
 
-public class GraphTests {
+public class TestGraph {
 
 	private Injector inj;
 	private Graph g;
@@ -53,9 +55,9 @@ public class GraphTests {
 
 	@Test
 	public void testConnectionsIDMs() throws Exception {
-		IDataMangler source = inj.getInstance(TestSource.class);
-		IDataMangler sink = inj.getInstance(TestSink.class);
-		IDataMangler sink2 = inj.getInstance(TestSink.class);
+		IDataMangler source = inj.getInstance(SimpleTestSource.class);
+		IDataMangler sink = inj.getInstance(SimpleTestSink.class);
+		IDataMangler sink2 = inj.getInstance(SimpleTestSink.class);
 		g.addMangler(source);
 		g.addMangler(sink);
 		Iterable<InstanceMethod<IDataMangler>> sourcePorts = g.getAllPortsOf(source);

@@ -1,9 +1,10 @@
-package de.cau.dataprocessing.tests;
+package de.cau.dataprocessing.tests.data;
 
 import de.cau.dataprocessing.filters.IDataMangler;
 import de.cau.dataprocessing.filters.annotations.InputPort;
 
-public class TestSink implements IDataMangler {
+
+public class SimpleTestSink implements IDataMangler {
 
 	@Override
 	public String getName() {
