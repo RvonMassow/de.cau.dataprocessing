@@ -171,4 +171,12 @@ public class Graph {
 	public Iterable<IDataMangler> getAllSinks() {
 		return Iterables.unmodifiableIterable(sinks);
 	}
+
+	public Iterable<InstanceMethod<IDataMangler>> getInPortsOf(IDataMangler idm) {
+		return Iterables.unmodifiableIterable(inPortsOf.get(idm));
+	}
+
+	public Iterable<InstanceMethod<IDataMangler>> getOutPortsOf(IDataMangler idm) {
+		return Iterables.unmodifiableIterable(outPortsOf.get(idm));
+	}
 }
