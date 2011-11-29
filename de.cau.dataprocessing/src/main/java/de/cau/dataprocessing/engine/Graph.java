@@ -21,6 +21,15 @@ import de.cau.dataprocessing.filters.annotations.InputPort;
 import de.cau.dataprocessing.filters.annotations.OutputPort;
 import de.cau.dataprocessing.reflect.InstanceMethod;
 
+/**
+ * This class describes a directed hyper graph of {@link IDataMangler} and their methods annotated
+ * with {@link InputPort} and {@link OutputPort}. These methods are seen as ports and can be interconnected
+ * (output* -> input*).
+ *
+ * @author Robert von Massow
+ * @since 0.1
+ *
+ */
 public class Graph {
 	// connections in graph (from -> to)
 	private Map<InstanceMethod<IDataMangler>, Collection<InstanceMethod<IDataMangler>>> mapping = new HashMap<InstanceMethod<IDataMangler>, Collection<InstanceMethod<IDataMangler>>>();
@@ -35,7 +44,17 @@ public class Graph {
 
 	private List<IDataMangler> sinks = new ArrayList<IDataMangler>();
 
-	// TODO remove
+	/**
+	 * Adds the given {@link IDataMangler} to the graph's nodes.<p>
+	 *
+	 * Its output and input ports are made available to the {@link #connect(InstanceMethod, InstanceMethod)} and can be retreived
+	 * using the {@link #getAllPortsOf(IDataMangler)}, {@link #getOutPortsOf(IDataMangler)} and {@link #getInPortsOf(IDataMangler)}.
+	 *
+	 * If the given {@link IDataMangler} does not provide any input ports, it is considered to be a source,
+	 * if it does not provide any output ports, it is a sink. These can also be retrieved using {@link #getAllSources()} or
+	 * {@link #getAllSinks()} respectively.
+	 * @param idm
+	 */
 	public void addMangler(final IDataMangler idm) {
 		Class<? extends IDataMangler> clazz = idm.getClass();
 		List<Method> methods = Arrays.asList(clazz.getMethods());
@@ -77,6 +96,16 @@ public class Graph {
 		allNodes.put(idm, Iterables.concat(inPortsOf.get(idm), outPortsOf.get(idm)));
 	}
 
+	/**
+	 * Connect an output port to input port.
+	 *
+	 * @param origin
+	 * @param target
+	 * @throws IllegalStateException if the {@link IDataMangler} defining either of the ports
+	 * 		has not been added to the graph
+	 * @throws IllegalArgumentException if the origin is not an output port or the target is not
+	 * 		an input port
+	 */
 	@SuppressWarnings("unchecked")
 	public void connect(InstanceMethod<IDataMangler> origin, InstanceMethod<IDataMangler> target) {
 		if(allNodes.get(origin.getInstance()) == null) {
@@ -129,6 +158,13 @@ public class Graph {
 		}
 	}
 
+	/**
+	 * Disconnects two ports from each other
+	 *
+	 * @param sourcePort
+	 * @param targetPort
+	 * @return true on success
+	 */
 	public boolean disconnect(final InstanceMethod<IDataMangler> sourcePort,
 			final InstanceMethod<IDataMangler> targetPort) {
 		Collection<InstanceMethod<IDataMangler>> connections = mapping.get(sourcePort);
@@ -143,7 +179,17 @@ public class Graph {
 		return false;
 	}
 
+
+	/**
+	 * Removes the given {@link IDataMangler} from the graph, disconnecting all ports currently in use.
+	 *
+	 * @param idm
+	 * @throws IllegalStateException if the node has not been added before
+	 */
 	public synchronized void removeIDM(IDataMangler idm) {
+		if(allNodes.get(idm) == null) {
+			throw new IllegalStateException();
+		}
 		final Iterable<InstanceMethod<IDataMangler>> outPorts = outPortsOf.get(idm);
 		final Iterable<InstanceMethod<IDataMangler>> inPorts = inPortsOf.get(idm);
 		for(InstanceMethod<IDataMangler> p : outPorts) {
@@ -172,11 +218,31 @@ public class Graph {
 		return Iterables.unmodifiableIterable(sinks);
 	}
 
+	/**
+	 * Returns all input ports of a previously added {@link IDataMangler}.
+	 *
+	 * @param idm
+	 * @return the input ports
+	 * @throws IllegalStateException if the node has not been added
+	 */
 	public Iterable<InstanceMethod<IDataMangler>> getInPortsOf(IDataMangler idm) {
+		if(allNodes.get(idm) == null) {
+			throw new IllegalStateException();
+		}
 		return Iterables.unmodifiableIterable(inPortsOf.get(idm));
 	}
 
+	/**
+	 * Returns all output ports of a previously added {@link IDataMangler}.
+	 *
+	 * @param idm
+	 * @return the output ports
+	 * @throws IllegalStateException if the node has not been added
+	 */
 	public Iterable<InstanceMethod<IDataMangler>> getOutPortsOf(IDataMangler idm) {
+		if(allNodes.get(idm) == null) {
+			throw new IllegalStateException();
+		}
 		return Iterables.unmodifiableIterable(outPortsOf.get(idm));
 	}
 }
