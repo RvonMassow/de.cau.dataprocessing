@@ -245,4 +245,49 @@ public class Graph {
 		}
 		return Iterables.unmodifiableIterable(outPortsOf.get(idm));
 	}
+
+	public Iterable<InstanceMethod<IDataMangler>> getAllConnectionsToIDM(final IDataMangler idm) {
+		Iterable<InstanceMethod<IDataMangler>> ports = Iterables.filter(mapping.keySet(), new Predicate<InstanceMethod<IDataMangler>>() {
+
+			@Override
+			public boolean apply(final InstanceMethod<IDataMangler> outPort) {
+				Collection<InstanceMethod<IDataMangler>> inPorts = mapping.get(outPort);
+				Iterable<InstanceMethod<IDataMangler>> filteredInPorts = Iterables.filter(inPorts, new Predicate<InstanceMethod<IDataMangler>>() {
+
+					@Override
+					public boolean apply(InstanceMethod<IDataMangler> inPort) {
+						boolean b = inPort.getInstance() == idm;
+						return b;
+					}
+				});
+				return !Iterables.isEmpty(filteredInPorts);
+			}
+
+		});
+		return Iterables.unmodifiableIterable(ports);
+	}
+
+
+	public Iterable<InstanceMethod<IDataMangler>> getAllConnectionsToInPort(final InstanceMethod<IDataMangler> inPort) {
+		if(inPortsOf.get(inPort.getInstance()) == null) {
+			throw new IllegalArgumentException();
+		}
+		Iterable<InstanceMethod<IDataMangler>> ports = Iterables.filter(mapping.keySet(), new Predicate<InstanceMethod<IDataMangler>>() {
+
+			@Override
+			public boolean apply(final InstanceMethod<IDataMangler> outPort) {
+				Collection<InstanceMethod<IDataMangler>> connectionsToInPorts = mapping.get(outPort);
+				Iterable<InstanceMethod<IDataMangler>> filtered = Iterables.filter(connectionsToInPorts, new Predicate<InstanceMethod<IDataMangler>>() {
+
+					@Override
+					public boolean apply(InstanceMethod<IDataMangler> inPortToBeChecked) {
+						return inPortToBeChecked.equals(inPort);
+					}
+				});
+				return Iterables.contains(filtered, inPort);
+			}
+
+		});
+		return Iterables.unmodifiableIterable(ports);
+	}
 }

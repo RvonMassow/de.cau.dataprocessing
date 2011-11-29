@@ -78,6 +78,8 @@ public class TestGraph {
 		Iterable<InstanceMethod<IDataMangler>> sink2Ports = g.getAllPortsOf(sink2);
 		InstanceMethod<IDataMangler> sink2Port = sink2Ports.iterator().next();
 		g.connect(sourcePort, sink2Port);
+		assertTrue(Iterables.size(g.getAllConnectionsToIDM(sink2)) == 1 && g.getAllConnectionsToIDM(sink2).iterator().next() == sourcePort);
+		assertTrue(Iterables.size(g.getAllConnectionsToInPort(sink2Port)) == 1 && g.getAllConnectionsToInPort(sink2Port).iterator().next() == sourcePort);
 		assertTrue("Source not connected to sink2", g.isConnected(sourcePort, sink2Port));
 		g.removeIDM(source);
 		assertFalse("Test source was not removed from all IDMs", Iterables.contains(g.getAllIDMs(), source));
