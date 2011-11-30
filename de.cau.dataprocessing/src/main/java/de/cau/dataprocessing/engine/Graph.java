@@ -8,14 +8,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-
+import com.google.common.collect.Maps;
 import de.cau.dataprocessing.filters.IDataMangler;
 import de.cau.dataprocessing.filters.annotations.InputPort;
 import de.cau.dataprocessing.filters.annotations.OutputPort;
@@ -39,6 +37,8 @@ public class Graph {
 	private Map<IDataMangler, Iterable<InstanceMethod<IDataMangler>>> outPortsOf = new HashMap<IDataMangler, Iterable<InstanceMethod<IDataMangler>>>();
 
 	private Map<IDataMangler, Iterable<InstanceMethod<IDataMangler>>> allNodes = new HashMap<IDataMangler, Iterable<InstanceMethod<IDataMangler>>>();
+
+	private Map<IDataMangler, Map<IDataMangler, Integer>> idmMapping = new HashMap<IDataMangler, Map<IDataMangler, Integer>>();
 
 	private List<IDataMangler> sources = new ArrayList<IDataMangler>();
 
@@ -122,11 +122,20 @@ public class Graph {
 		}
 		Collection<InstanceMethod<IDataMangler>> connections = this.mapping.get(origin);
 		if(connections == null) {
-			connections = new ArrayList<InstanceMethod<IDataMangler>>();
+			connections = Lists.<InstanceMethod<IDataMangler>>newArrayList();
 			this.mapping.put(origin, connections);
+		}
+		Map<IDataMangler, Integer> affected = idmMapping.get(origin.getInstance());
+		if(affected == null) {
+			affected = Maps.<IDataMangler, Integer>newHashMap();
+			idmMapping.put(origin.getInstance(), affected);
+		}
+		if(affected.get(target.getInstance()) == null) {
+			affected.put(target.getInstance(), 0);
 		}
 		if(!connections.contains(target)) {
 			Iterables.<InstanceMethod<IDataMangler>>addAll(connections, Lists.<InstanceMethod<IDataMangler>>newArrayList(target));
+			affected.put(target.getInstance(), affected.get(target.getInstance()) + 1);
 		}
 	}
 
@@ -169,6 +178,9 @@ public class Graph {
 			final InstanceMethod<IDataMangler> targetPort) {
 		Collection<InstanceMethod<IDataMangler>> connections = mapping.get(sourcePort);
 		if(connections != null) {
+			Map<IDataMangler, Integer> map = idmMapping.get(sourcePort.getInstance());
+			IDataMangler targetIDM = targetPort.getInstance();
+			map.put(targetIDM, map.get(targetIDM) - 1);
 			return Iterables.removeIf(connections, new Predicate<InstanceMethod<IDataMangler>>() {
 
 				public boolean apply(InstanceMethod<IDataMangler> input) {
@@ -206,6 +218,10 @@ public class Graph {
 			mapping.put(connections, filtered);
 		}
 		allNodes.remove(idm);
+		for(IDataMangler e: idmMapping.keySet()) {
+			idmMapping.get(e).remove(idm);
+		}
+		idmMapping.remove(idm);
 		Iterables.removeAll(sources, Lists.newArrayList(idm));
 		Iterables.removeAll(sinks, Lists.newArrayList(idm));
 	}
@@ -290,4 +306,39 @@ public class Graph {
 		});
 		return Iterables.unmodifiableIterable(ports);
 	}
+
+	public Iterable<InstanceMethod<IDataMangler>> getConnectionFromIDM(IDataMangler idm) {
+		Iterable<InstanceMethod<IDataMangler>> outPorts = outPortsOf.get(idm);
+		if(outPorts == null || Iterables.isEmpty(outPorts)) {
+			return Collections.<InstanceMethod<IDataMangler>>emptyList();
+		}
+		return Iterables
+				.unmodifiableIterable(Iterables.concat(Iterables.filter(
+						Iterables
+								.transform(
+										outPorts,
+										new Function<InstanceMethod<IDataMangler>, Iterable<InstanceMethod<IDataMangler>>>() {
+
+											@Override
+											public Iterable<InstanceMethod<IDataMangler>> apply(
+													InstanceMethod<IDataMangler> input) {
+												return mapping.get(input);
+											}
+										}),
+						new Predicate<Iterable<InstanceMethod<IDataMangler>>>() {
+
+							@Override
+							public boolean apply(
+									Iterable<InstanceMethod<IDataMangler>> input) {
+								return input != null;
+							}
+						})));
+	}
+
+	public Iterable<IDataMangler> getFollowerIDMsOfIDM(
+			IDataMangler idm) {
+		return Iterables.unmodifiableIterable(idmMapping.keySet());
+	}
+
+
 }

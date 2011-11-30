@@ -3,7 +3,9 @@ package de.cau.dataprocessing.tests;
 import static org.junit.Assert.*;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.Iterables;
@@ -25,6 +27,14 @@ public class TestGraph {
 	public void setUp() throws Exception {
 		inj = Guice.createInjector();
 		g = inj.getInstance(Graph.class);
+	}
+
+	@AfterClass
+	public static void afterClass() {
+	}
+
+	@BeforeClass
+	public static void beforeClass() {
 	}
 
 	@After
@@ -81,6 +91,10 @@ public class TestGraph {
 		assertTrue(Iterables.size(g.getAllConnectionsToIDM(sink2)) == 1 && g.getAllConnectionsToIDM(sink2).iterator().next() == sourcePort);
 		assertTrue(Iterables.size(g.getAllConnectionsToInPort(sink2Port)) == 1 && g.getAllConnectionsToInPort(sink2Port).iterator().next() == sourcePort);
 		assertTrue("Source not connected to sink2", g.isConnected(sourcePort, sink2Port));
+		Iterable<InstanceMethod<IDataMangler>> targetPorts = g.getConnectionFromIDM(source);
+		assertTrue(Iterables.size(targetPorts) == 2 && Iterables.contains(targetPorts, sinkPort) && Iterables.contains(targetPorts, sink2Port));
+		Iterable<IDataMangler> targetIDMs = g.getFollowerIDMsOfIDM(source);
+		assertTrue(Iterables.size(targetIDMs) == 2 && Iterables.contains(targetIDMs, sink) && Iterables.contains(targetIDMs, sink2));
 		g.removeIDM(source);
 		assertFalse("Test source was not removed from all IDMs", Iterables.contains(g.getAllIDMs(), source));
 		assertFalse("Test source was not removed from sources", Iterables.contains(g.getAllSources(), source));;
