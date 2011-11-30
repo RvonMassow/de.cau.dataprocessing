@@ -337,7 +337,8 @@ public class Graph {
 
 	public Iterable<IDataMangler> getFollowerIDMsOfIDM(
 			IDataMangler idm) {
-		return Iterables.unmodifiableIterable(idmMapping.keySet());
+		Map<IDataMangler, Integer> map = idmMapping.get(idm);
+		return map != null ? Iterables.unmodifiableIterable(map.keySet()) : Collections.<IDataMangler>emptyList();
 	}
 
 
